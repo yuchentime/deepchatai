@@ -33,3 +33,6 @@ build/
 .vscode/
 
 shell.log
+
+application.yml
+*.log

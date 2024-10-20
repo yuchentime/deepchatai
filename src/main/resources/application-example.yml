@@ -1,0 +1,34 @@
+spring:
+  ai:
+    zhipuai:
+      api-key: [API KEY]
+      chat:
+        enabled: true
+        options:
+          model: GLM-4-AirX
+          temperature: 0.3
+    vectorstore:
+      neo4j:
+        embedding-dimension: 1024
+        index-name: deepReflectionChat
+        label: DeepReflectionChat
+        initialize-schema: true
+
+  neo4j:
+    uri: neo4j://[IP]:7687
+    authentication:
+      username: neo4j
+      password: [PASSWORD]
+
+logging:
+  file:
+    name: deep-chat.log
+    max-size: 10MB
+    max-history: 30
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level [%thread] %logger{36} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level [%thread] %logger{36} - %msg%n"
+  level:
+    root: INFO
+    com:
+      example: DEBUG
