@@ -6,7 +6,6 @@ import lombok.Data;
 @Data
 public class CreateQuestionRequest extends BaseRequest {
 
-    @NotBlank(message = "topic must be not empty")
-    private String topic;
-
+    @NotBlank(message = "title must be not empty")
+    private String title;
 }

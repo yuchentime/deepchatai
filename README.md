@@ -25,4 +25,8 @@ drop index deepReflectionChat
 
 -- 查询所有索引
 SHOW VECTOR INDEXES
+
+-- 删除所有数据
+MATCH (n)
+DETACH DELETE n
 ```

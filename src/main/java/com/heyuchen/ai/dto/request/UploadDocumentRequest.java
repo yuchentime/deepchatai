@@ -6,6 +6,10 @@ import lombok.Data;
 @Data
 public class UploadDocumentRequest {
 
+    @NotBlank(message = "title must be not empty")
+    private String title;
+
     @NotBlank(message = "text must be not empty")
     private String text;
+
 }

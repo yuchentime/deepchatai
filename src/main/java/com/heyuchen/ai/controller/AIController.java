@@ -27,15 +27,13 @@ public class AIController {
 
     @PostMapping("/upload-text")
     ApiResponse uploadText(@RequestBody UploadDocumentRequest request) {
-        aiService.uploadText(request.getText());
+        aiService.uploadText(request.getTitle(), request.getText());
         return ApiResponse.success("Successfully uploaded.", null);
     }
 
     @PostMapping("generate-question")
     ApiResponse generateQuestion(@RequestBody CreateQuestionRequest request) throws BizException {
-        String provider = request.getProvider();
-        String topic = request.getTopic();
-        List<String> questionList = aiService.generateQuestions(provider, topic);
+        List<String> questionList = aiService.generateQuestions(request.getProvider(), request.getTitle());
         return ApiResponse.success("Successfully generated questions.", questionList);
     }
 
