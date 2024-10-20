@@ -52,9 +52,6 @@ public class AiService {
     }
 
     public List<String> generateQuestions(String provider, String title) throws BizException {
-
-        ChatClient chatClient = chatClientFactory.getChatClient(ModelProviderEnum.getByProvider(provider));
-
         String question = title;
 
         FilterExpressionBuilder filter = new FilterExpressionBuilder();
@@ -67,6 +64,7 @@ public class AiService {
         }
 
         Prompt prompt = buildPromptOfGenerateQuestion(question, retrievedDocuments);
+        ChatClient chatClient = chatClientFactory.getChatClient(ModelProviderEnum.getByProvider(provider));
         ChatResponse chatResponse = chatClient.prompt(prompt).call().chatResponse();
 
         if (CollectionUtils.isEmpty(chatResponse.getResults())) {
