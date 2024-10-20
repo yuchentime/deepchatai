@@ -70,9 +70,10 @@ public class ApiResponse<T> {
      * @param data the data payload
      * @return an instance of ApiResponse
      */
-    public static <T> ApiResponse<T> success(T data) {
+    public static <T> ApiResponse<T> success(String message, T data) {
         return ApiResponse.<T>builder()
                 .status("success")
+                .message(message)
                 .data(data)
                 .build();
     }
