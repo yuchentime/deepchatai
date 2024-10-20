@@ -1,0 +1,17 @@
+spring:
+  ai:
+    zhipuai:
+      api-key: 548de4b3ca3f41f40424693b0357f8fe.2IfJtMSAw7qs5NCb
+      chat:
+        enabled: true
+        options:
+          model: GLM-4-AirX
+          temperature: 0.3
+      embedding:
+        options:
+          model: embedding-3
+  neo4j:
+    uri: neo4j://101.34.70.84:7687
+    authentication:
+      username: neo4j
+      password: IUG*&IUGI@12

@@ -1,8 +1,8 @@
 package com.heyuchen.ai.constants;
 
 public enum ModelProviderEnum {
-    OPENAI("openai"),
-    BAIDU("baidu"),
+    QWEN("tongyi"),
+    DEEPSEEK("deepseek"),
     ZHIPU("zhipu");
 
     private String provider;
@@ -13,5 +13,14 @@ public enum ModelProviderEnum {
 
     public String getProvider() {
         return provider;
+    }
+
+    public static ModelProviderEnum getByProvider(String provider) {
+        for (ModelProviderEnum modelProviderEnum : ModelProviderEnum.values()) {
+            if (modelProviderEnum.getProvider().equals(provider)) {
+                return modelProviderEnum;
+            }
+        }
+        return ModelProviderEnum.ZHIPU;
     }
 }
