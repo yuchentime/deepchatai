@@ -16,4 +16,10 @@ public class PromptConfig {
     @Value("${user.generate.question}")
     private String generateQuestionUser;
 
+    @Value("${system.evaluate.answer}")
+    private String evaluateAnswerSystem;
+
+    @Value("${user.evaluate.answer}")
+    private String evaluateAnswerUser;
+
 }

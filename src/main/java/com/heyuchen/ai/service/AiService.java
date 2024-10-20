@@ -1,10 +1,7 @@
 package com.heyuchen.ai.service;
 
 import com.heyuchen.ai.configuration.PromptConfig;
-import com.heyuchen.ai.constants.ApiResponse;
 import com.heyuchen.ai.constants.ModelProviderEnum;
-import com.heyuchen.ai.controller.AIController;
-import com.heyuchen.ai.dto.request.UploadDocumentRequest;
 import com.heyuchen.ai.exception.BizException;
 import com.heyuchen.ai.factory.ChatClientFactory;
 import org.apache.logging.log4j.LogManager;
@@ -64,7 +61,7 @@ public class AiService {
         }
 
         ChatClient chatClient = chatClientFactory.getChatClient(ModelProviderEnum.getByProvider(provider));
-        Prompt prompt = buildQuestionPrompt(topic, retrievedDocuments);
+        Prompt prompt = buildPromptOfGenerateQuestion(topic, retrievedDocuments);
         ChatResponse chatResponse = chatClient.prompt(prompt).call().chatResponse();
 
         if (CollectionUtils.isEmpty(chatResponse.getResults())) {
@@ -72,15 +69,43 @@ public class AiService {
             throw new BizException("Failed to generate questions from AI.");
         }
         String output = chatResponse.getResult().getOutput().getContent();
-        return List.of(StringUtils.delimitedListToStringArray(output, "\n"));
+        return List.of(StringUtils.delimitedListToStringArray(output, "\n")).stream().filter(StringUtils::hasText).toList();
     }
 
-    private Prompt buildQuestionPrompt(String topic, List<Document> retrievedDocuments) {
-        SystemPromptTemplate systemPromptTemplate = new SystemPromptTemplate(promptConfig.getGenerateQuestionSystem() + "{format}");
+    private Prompt buildPromptOfGenerateQuestion(String topic, List<Document> retrievedDocuments) {
+        SystemPromptTemplate systemPromptTemplate = new SystemPromptTemplate(promptConfig.getGenerateQuestionSystem());
         String context = retrievedDocuments.stream().map(Document::getContent).collect(Collectors.joining("\n\n"));
         Message systemMessage = systemPromptTemplate.createMessage(Map.of("context", context));
 
         PromptTemplate userPromptTemplate = new PromptTemplate(promptConfig.getGenerateQuestionUser(), Map.of("topic", topic));
+        return new Prompt(List.of(systemMessage, userPromptTemplate.createMessage()));
+    }
+
+    public String evaluateAnswer(String provider, String question, String answer) throws BizException {
+
+        List<Document> retrievedDocuments = vectorStore.similaritySearch(SearchRequest.query(question).withTopK(5).withSimilarityThreshold(0.3));
+
+        if (CollectionUtils.isEmpty(retrievedDocuments)) {
+            logger.warn("No any documents retrieved.");
+            throw new BizException("Not found any information regarding " + question);
+        }
+
+        ChatClient chatClient = chatClientFactory.getChatClient(ModelProviderEnum.getByProvider(provider));
+        Prompt prompt = buildPromptOfEvaluateAnswer(question, answer, retrievedDocuments);
+        ChatResponse chatResponse = chatClient.prompt(prompt).call().chatResponse();
+        if (CollectionUtils.isEmpty(chatResponse.getResults())) {
+            logger.warn("Failed to evaluate answer from LLM.");
+            throw new BizException("Failed to get evaluated result from AI.");
+        }
+        return chatResponse.getResult().getOutput().getContent();
+    }
+
+    private Prompt buildPromptOfEvaluateAnswer(String question, String answer, List<Document> retrievedDocuments) {
+        SystemPromptTemplate systemPromptTemplate = new SystemPromptTemplate(promptConfig.getEvaluateAnswerSystem());
+        String context = retrievedDocuments.stream().map(Document::getContent).collect(Collectors.joining("\n\n"));
+        Message systemMessage = systemPromptTemplate.createMessage(Map.of("context", context, "question", question));
+
+        PromptTemplate userPromptTemplate = new PromptTemplate(promptConfig.getEvaluateAnswerUser(), Map.of("answer", answer));
         return new Prompt(List.of(systemMessage, userPromptTemplate.createMessage()));
     }
 

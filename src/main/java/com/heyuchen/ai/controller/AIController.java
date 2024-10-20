@@ -2,6 +2,7 @@ package com.heyuchen.ai.controller;
 
 import com.heyuchen.ai.constants.ApiResponse;
 import com.heyuchen.ai.dto.request.CreateQuestionRequest;
+import com.heyuchen.ai.dto.request.EvaluateAnswerRequest;
 import com.heyuchen.ai.dto.request.UploadDocumentRequest;
 import com.heyuchen.ai.exception.BizException;
 import com.heyuchen.ai.service.AiService;
@@ -36,6 +37,15 @@ public class AIController {
         String topic = request.getTopic();
         List<String> questionList = aiService.generateQuestions(provider, topic);
         return ApiResponse.success("Successfully generated questions.", questionList);
+    }
+
+    @PostMapping("evaluate-answer")
+    ApiResponse evaluateAnswer(@RequestBody EvaluateAnswerRequest request) throws BizException {
+        String provider = request.getProvider();
+        String question = request.getQuestion();
+        String answer = request.getAnswer();
+        String evaluatedResult = aiService.evaluateAnswer(provider, question, answer);
+        return ApiResponse.success("Successfully generated questions.", evaluatedResult);
     }
 
 }
