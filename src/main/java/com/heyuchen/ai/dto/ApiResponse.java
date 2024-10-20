@@ -1,4 +1,4 @@
-package com.heyuchen.ai.constants;
+package com.heyuchen.ai.dto;
 
 
 import com.fasterxml.jackson.annotation.JsonInclude;

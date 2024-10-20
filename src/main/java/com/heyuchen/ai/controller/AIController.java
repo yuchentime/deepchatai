@@ -1,6 +1,6 @@
 package com.heyuchen.ai.controller;
 
-import com.heyuchen.ai.constants.ApiResponse;
+import com.heyuchen.ai.dto.ApiResponse;
 import com.heyuchen.ai.dto.request.CreateQuestionRequest;
 import com.heyuchen.ai.dto.request.EvaluateAnswerRequest;
 import com.heyuchen.ai.dto.request.UploadDocumentRequest;
