@@ -4,12 +4,10 @@ import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
 
 @Data
-public class EvaluateAnswerRequest extends BaseRequest {
+public class RetrievalRequest extends BaseRequest {
 
     @NotBlank(message = "title must be not empty")
     private String title;
     @NotBlank(message = "question must be not empty")
     private String question;
-    @NotBlank(message = "answer must be not empty")
-    private String answer;
 }

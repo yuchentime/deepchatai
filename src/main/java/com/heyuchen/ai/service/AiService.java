@@ -22,6 +22,7 @@ import org.springframework.ai.vectorstore.filter.FilterExpressionBuilder;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
+import reactor.core.publisher.Flux;
 
 import java.util.List;
 import java.util.Map;
@@ -75,9 +76,28 @@ public class AiService {
         return List.of(StringUtils.delimitedListToStringArray(output, "\n")).stream().filter(StringUtils::hasText).toList();
     }
 
-    private Prompt queryRewrite(String question) {
-        String prompt = String.format("根据给定的问题，重新编写问题，使其更加准确、完整、简洁，以便于更精准地进行数据检索。问题: %s。只需给出生成的新提问，不要包含任何其他信息。", question);
-        return new Prompt(prompt);
+    public Flux<String> retrieve(String provider, String title, String question) throws BizException {
+        FilterExpressionBuilder filter = new FilterExpressionBuilder();
+        Filter.Expression filterExpression = filter.eq("title", title).build();
+        List<Document> retrievedDocuments = vectorStore.similaritySearch(SearchRequest.query(question).withTopK(5).withSimilarityThreshold(0.3).withFilterExpression(filterExpression));
+
+        if (CollectionUtils.isEmpty(retrievedDocuments)) {
+            logger.warn("No any documents retrieved.");
+            throw new BizException("Not found any information regarding " + question);
+        }
+
+        ChatClient chatClient = chatClientFactory.getChatClient(ModelProviderEnum.getByProvider(provider));
+        Prompt prompt = new Prompt("""
+                你是一名信息检索专家，请根据如下给定的上下文:
+                ```
+                {context}
+                ```
+                回答如下问题: 
+                ```
+                {question}
+                ```
+                """);
+        return chatClient.prompt(prompt).stream().content();
     }
 
     private Prompt buildPromptOfGenerateQuestion(String topic, List<Document> retrievedDocuments) {
@@ -89,9 +109,12 @@ public class AiService {
         return new Prompt(List.of(systemMessage, userPromptTemplate.createMessage()));
     }
 
-    public String evaluateAnswer(String provider, String question, String answer) throws BizException {
 
-        List<Document> retrievedDocuments = vectorStore.similaritySearch(SearchRequest.query(question).withTopK(5).withSimilarityThreshold(0.3));
+    public String evaluateAnswer(String provider, String title, String question, String answer) throws BizException {
+
+        FilterExpressionBuilder filter = new FilterExpressionBuilder();
+        Filter.Expression filterExpression = filter.eq("title", title).build();
+        List<Document> retrievedDocuments = vectorStore.similaritySearch(SearchRequest.query(question).withTopK(5).withSimilarityThreshold(0.3).withFilterExpression(filterExpression));
 
         if (CollectionUtils.isEmpty(retrievedDocuments)) {
             logger.warn("No any documents retrieved.");
@@ -100,12 +123,8 @@ public class AiService {
 
         ChatClient chatClient = chatClientFactory.getChatClient(ModelProviderEnum.getByProvider(provider));
         Prompt prompt = buildPromptOfEvaluateAnswer(question, answer, retrievedDocuments);
-        ChatResponse chatResponse = chatClient.prompt(prompt).call().chatResponse();
-        if (CollectionUtils.isEmpty(chatResponse.getResults())) {
-            logger.warn("Failed to evaluate answer from LLM.");
-            throw new BizException("Failed to get evaluated result from AI.");
-        }
-        return chatResponse.getResult().getOutput().getContent();
+
+        return chatClient.prompt(prompt).call().content();
     }
 
     private Prompt buildPromptOfEvaluateAnswer(String question, String answer, List<Document> retrievedDocuments) {

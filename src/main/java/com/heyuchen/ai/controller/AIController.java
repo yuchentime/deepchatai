@@ -3,6 +3,7 @@ package com.heyuchen.ai.controller;
 import com.heyuchen.ai.dto.ApiResponse;
 import com.heyuchen.ai.dto.request.CreateQuestionRequest;
 import com.heyuchen.ai.dto.request.EvaluateAnswerRequest;
+import com.heyuchen.ai.dto.request.RetrievalRequest;
 import com.heyuchen.ai.dto.request.UploadDocumentRequest;
 import com.heyuchen.ai.exception.BizException;
 import com.heyuchen.ai.service.AiService;
@@ -11,6 +12,7 @@ import org.apache.logging.log4j.Logger;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
+import reactor.core.publisher.Flux;
 
 import java.util.List;
 
@@ -24,6 +26,10 @@ public class AIController {
     public AIController(AiService aaiService) {
         this.aiService = aaiService;
     }
+
+//    todo 多模态
+
+//    etl本地数据
 
     @PostMapping("/upload-text")
     ApiResponse uploadText(@RequestBody UploadDocumentRequest request) {
@@ -42,8 +48,13 @@ public class AIController {
         String provider = request.getProvider();
         String question = request.getQuestion();
         String answer = request.getAnswer();
-        String evaluatedResult = aiService.evaluateAnswer(provider, question, answer);
+        String evaluatedResult = aiService.evaluateAnswer(provider, request.getTitle(), question, answer);
         return ApiResponse.success("Successfully generated questions.", evaluatedResult);
+    }
+
+    @PostMapping("retrieve")
+    Flux<String> retrieve(@RequestBody RetrievalRequest request) throws BizException {
+        return aiService.retrieve(request.getProvider(), request.getTitle(), request.getQuestion());
     }
 
 }
