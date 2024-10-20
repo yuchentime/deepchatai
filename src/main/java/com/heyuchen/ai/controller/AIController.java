@@ -1,5 +1,6 @@
 package com.heyuchen.ai.controller;
 
+import com.heyuchen.ai.configuration.PromptConfig;
 import com.heyuchen.ai.constants.ApiResponse;
 import com.heyuchen.ai.constants.ModelProviderEnum;
 import com.heyuchen.ai.dto.request.CreateQuestionRequest;
@@ -13,11 +14,14 @@ import org.springframework.ai.chat.messages.SystemMessage;
 import org.springframework.ai.chat.messages.UserMessage;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.prompt.Prompt;
+import org.springframework.ai.chat.prompt.PromptTemplate;
+import org.springframework.ai.chat.prompt.SystemPromptTemplate;
 import org.springframework.ai.document.Document;
 import org.springframework.ai.transformer.splitter.TextSplitter;
 import org.springframework.ai.transformer.splitter.TokenTextSplitter;
 import org.springframework.ai.vectorstore.SearchRequest;
 import org.springframework.ai.vectorstore.VectorStore;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.util.CollectionUtils;
 import org.springframework.web.bind.annotation.*;
 
@@ -26,10 +30,19 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 @RestController
-public record AIController(ChatClientFactory chatClientFactory,
-                           VectorStore vectorStore) {
+public class AIController {
 
     private static final Logger logger = LogManager.getLogger(AIController.class);
+
+    private final VectorStore vectorStore;
+    private final ChatClientFactory chatClientFactory;
+    private final PromptConfig promptConfig;
+
+    public AIController(VectorStore vectorStore, ChatClientFactory chatClientFactory, PromptConfig promptConfig) {
+        this.vectorStore = vectorStore;
+        this.chatClientFactory = chatClientFactory;
+        this.promptConfig = promptConfig;
+    }
 
     @PostMapping("/upload-text")
     ApiResponse uploadText(@RequestBody UploadDocumentRequest request) {
@@ -48,6 +61,8 @@ public record AIController(ChatClientFactory chatClientFactory,
         String provider = request.getProvider();
         String topic = request.getTopic();
 
+//        todo 如果用户不指定topic，那么会传入标题，可能需要让LLM重写
+
         List<Document> retrievedDocuments = vectorStore.similaritySearch(SearchRequest.query(topic).withTopK(5).withSimilarityThreshold(0.3));
 
         if (CollectionUtils.isEmpty(retrievedDocuments)) {
@@ -55,11 +70,13 @@ public record AIController(ChatClientFactory chatClientFactory,
             return ApiResponse.error("No any documents retrieved.");
         }
 
-        ChatClient chatClient = chatClientFactory.getChatClient(ModelProviderEnum.getByProvider(provider));
+        SystemPromptTemplate systemPromptTemplate = new SystemPromptTemplate(promptConfig.getGenerateQuestionSystem());
+        Message systemMessage = systemPromptTemplate.createMessage(Map.of("context", retrievedDocuments.stream().map(Document::getContent).collect(Collectors.joining("\n\n"))));
 
-        Message systemMessage = new SystemMessage("You are an expert in question generation, extracting key information from text and generating deep, enlightening questions.Please generate 5 high-quality questions regarding {topic} base on the {context}. <context> " + retrievedDocuments.stream().map(Document::getContent).collect(Collectors.joining("\n\n")) + "</context>");
-        Message userMessage = new UserMessage("<topic>" + topic + "</topic>");
-        ChatResponse chatResponse = chatClient.prompt(new Prompt(List.of(systemMessage, userMessage))).call().chatResponse();
+        PromptTemplate userPromptTemplate = new PromptTemplate(promptConfig.getGenerateQuestionUser(), Map.of("topic", topic));
+
+        ChatClient chatClient = chatClientFactory.getChatClient(ModelProviderEnum.getByProvider(provider));
+        ChatResponse chatResponse = chatClient.prompt(new Prompt(List.of(systemMessage, userPromptTemplate.createMessage()))).call().chatResponse();
 
         if (CollectionUtils.isEmpty(chatResponse.getResults())) {
             logger.warn("Failed to generate questions from LLM.");

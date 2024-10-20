@@ -34,5 +34,6 @@ build/
 
 shell.log
 
-application.yml
 *.log
+src/main/resources/application.yml
+deep-chat.log
