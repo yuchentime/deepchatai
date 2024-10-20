@@ -6,6 +6,5 @@ import lombok.Data;
 public class CreateQuestionRequest extends BaseRequest {
 
     private String topic;
-    private String text;
 
 }

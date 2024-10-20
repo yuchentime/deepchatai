@@ -1,66 +1,28 @@
-# Spring AI with OpenAI
+## 使用前置
+- 安装Neo4j
+- 智谱清言api key
 
-This project contains a web service that will accept HTTP GET requests at
-`http://localhost:8080/ai/simple`.
+## Neo4j相关配置
+访问http://{IP地址}:7474/browser/，在命令输入栏中，执行如下**创建索引**命令。
 
-There is optional `message` parameter whose default value is "Tell me a joke".
-
-The response to the request is from the OpenAI ChatGPT Service.
-
-## Prerequisites
-
-Before using the AI commands, make sure you have a developer token from OpenAI.
-
-Create an account at [OpenAI Signup](https://platform.openai.com/signup) and generate the token at [API Keys](https://platform.openai.com/account/api-keys).
-
-The Spring AI project defines a configuration property named `spring.ai.openai.api-key` that you should set to the value of the `API Key` obtained from `openai.com`.
-
-Exporting an environment variable is one way to set that configuration property.
-```shell
-export SPRING_AI_OPENAI_API_KEY=<INSERT KEY HERE>
+**创建索引**
 ```
-
-Setting the API key is all you need to run the application.
-However, you can find more information on setting started in the [Spring AI reference documentation section on OpenAI Chat](https://docs.spring.io/spring-ai/reference/api/clients/openai-chat.html).
-
-## Building and running
-
+CREATE VECTOR INDEX deepReflectionChat IF NOT EXISTS
+FOR (m:DeepReflectionChat)
+ON m.embedding
+OPTIONS { indexConfig: {
+ `vector.dimensions`: 1024,
+ `vector.similarity_function`: 'cosine'
+}}
 ```
-./mvnw spring-boot:run
+**其他常用语句**
 ```
+-- 查询label是‘DeepReflectionChat’的前25条记录
+MATCH (n:DeepReflectionChat) RETURN n LIMIT 25
 
-## Access the endpoint
+-- 删除索引
+drop index deepReflectionChat
 
-To get a response to the default request of "Tell me a joke"
-
-```shell 
-curl localhost:8080/ai
-```
-
-A sample response is 
-
-```text
-Sure, here's a classic one for you:
-
-Why don't scientists trust atoms?
-
-Because they make up everything!
-```
-
-Now using the `message` request parameter
-```shell
-curl --get  --data-urlencode 'message=Tell me a joke about a cow.' localhost:8080/ai 
-```
-
-A sample response is
-
-```text
-Why did the cow go to space?
-
-Because it wanted to see the mooooon!
-```
-
-Alternatively use the [httpie](https://httpie.io/) client
-```shell
-http localhost:8080/ai message=='Tell me a joke about a cow.'
+-- 查询所有索引
+SHOW VECTOR INDEXES
 ```
