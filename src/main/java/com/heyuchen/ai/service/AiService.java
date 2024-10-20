@@ -88,7 +88,7 @@ public class AiService {
 
         ChatClient chatClient = chatClientFactory.getChatClient(ModelProviderEnum.getByProvider(provider));
         Prompt prompt = new Prompt("""
-                你是一名信息检索专家，请根据如下给定的上下文:
+                你是一名信息检索专家，请根据给定的上下文:
                 ```
                 {context}
                 ```
@@ -98,6 +98,11 @@ public class AiService {
                 ```
                 """);
         return chatClient.prompt(prompt).stream().content();
+    }
+
+    private String queryRewriting(String question) {
+
+        return question;
     }
 
     private Prompt buildPromptOfGenerateQuestion(String topic, List<Document> retrievedDocuments) {
