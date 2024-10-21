@@ -100,11 +100,6 @@ public class AiService {
         return chatClient.prompt(prompt).stream().content();
     }
 
-    private String queryRewriting(String question) {
-
-        return question;
-    }
-
     private Prompt buildPromptOfGenerateQuestion(String topic, List<Document> retrievedDocuments) {
         SystemPromptTemplate systemPromptTemplate = new SystemPromptTemplate(promptConfig.getGenerateQuestionSystem());
         String context = retrievedDocuments.stream().map(Document::getContent).collect(Collectors.joining("\n\n"));
