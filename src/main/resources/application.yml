@@ -7,9 +7,13 @@ spring:
         options:
           model: GLM-4-AirX
           temperature: 0.3
-      embedding:
-        options:
-          model: embedding-3
+    vectorstore:
+      neo4j:
+        embedding-dimension: 1024
+        index-name: deepReflectionChat
+        label: DeepReflectionChat
+        initialize-schema: true
+
   neo4j:
     uri: neo4j://101.34.70.84:7687
     authentication:

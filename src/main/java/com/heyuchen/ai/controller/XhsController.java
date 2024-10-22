@@ -2,6 +2,7 @@ package com.heyuchen.ai.controller;
 
 import com.heyuchen.ai.dto.ApiResponse;
 import com.heyuchen.ai.dto.request.RateXhsContentRequest;
+import com.heyuchen.ai.dto.response.RateXhsContentResponse;
 import com.heyuchen.ai.service.XhsService;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -25,11 +26,15 @@ public class XhsController {
     }
 
     @PostMapping("rate")
-    public ApiResponse<Integer> rate(@RequestBody RateXhsContentRequest request) {
+    public ApiResponse<RateXhsContentResponse> rate(@RequestBody RateXhsContentRequest request) {
 //        negative：明显的引流获客行为，且不包含任何实质性内容。可以作为Automa的默认字段参数
 //        positive：具有明确的观点输出
+        logger.info("keyword:{}", request.getKeyword());
+        RateXhsContentResponse response = new RateXhsContentResponse();
         if (!StringUtils.hasText(request.getText()) || !StringUtils.hasText(request.getKeyword())) {
-            return ApiResponse.success("", 0);
+            response.setScore(0);
+            response.setReason("没有采集到笔记正文或搜索关键词");
+            return ApiResponse.success("参数不能为空", response);
         }
         if (!StringUtils.hasText(request.getPositive())) {
             request.setPositive("无其他要求");
@@ -38,7 +43,9 @@ public class XhsController {
             request.setNegative("无其他要求");
         }
         JSONObject resultJson = xhsService.rate(request.getText(), request.getKeyword(), request.getPositive(), request.getNegative());
-        return ApiResponse.success("success", resultJson.getInt("rate"));
+        response.setScore(resultJson.getInt("score"));
+        response.setReason(resultJson.getString("reason"));
+        return ApiResponse.success("success", response);
     }
 
 }
