@@ -5,7 +5,6 @@ spring:
       chat:
         enabled: true
         options:
-          model: GLM-4-AirX
           temperature: 0.3
       embedding:
         options:
