@@ -46,7 +46,7 @@ public class XhsService {
                 ```
                 """;
         PromptTemplate promptTemplate = new PromptTemplate(template, Map.of("text", text, "keyword", keyword, "positive", positive, "negative", negative));
-        String modelName = StringUtils.hasText(System.getenv("zhipuai.model")) ? System.getenv("zhipuai.model") : ZhiPuAiApi.ChatModel.GLM_4_AirX.getValue();
+        String modelName = StringUtils.hasText(System.getenv("zhipuai_model")) ? System.getenv("zhipuai_model") : ZhiPuAiApi.ChatModel.GLM_4_AirX.getValue();
         logger.info("current model name is: {}", modelName);
         ChatResponse chatResponse = zhipuChatModel.call(
                 new Prompt(
